@@ -2974,13 +2974,13 @@ lakprog<-function(np=0,
 }
 
 ptm3<-proc.time()
-lakprog(
-  np=4,
-  pc=c(0.30,4),
-  pcratio=c(1,2,2,2),
-  k=0.65,
-  power=0.8
-)
+# lakprog(
+#   np=4,
+#   pc=c(0.30,4),
+#   pcratio=c(1,2,2,2),
+#   k=0.65,
+#   power=0.8
+# )
 
 lakprog(
   np=4,
