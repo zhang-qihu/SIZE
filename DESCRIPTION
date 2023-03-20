@@ -1,0 +1,17 @@
+Package: SIZE
+Type: Package
+Title: Sample Size Calculation for Complex Clinical Trials with Survival Endpoints
+Version: 1.0.0
+Author: Qihu Zhang & Joanna H. Shih
+Maintainer: Qihu Zhang <zhangqihu@yahoo.com> Joanna H. Shih<jshih@mail.nih.gov>
+Description: Sample size, power or duration of the study are calculated for survival endpoints with time-dependent rates of event, crossover, and loss to follow-up. The calculation allows for the specification of a wide range of complexities commonly occurring in clinical trials including nonproportional hazards, lag in treatment effect, and uncertainties in treatment benefit. It was based on the method of Lakatos (1986, 1988) and previously implemented in SAS.
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.1
+Depends: R (>= 4.0.0)
+Packaged: 2023-03-20 02:20:30 UTC Qihu.Zhang
+Repository: GitHub
+Date/Publication: 2023-03-20 02:30:00 UTC

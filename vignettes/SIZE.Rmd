@@ -1,0 +1,188 @@
+---
+title: "Sample size, power, and duration time calculation for two-arm clinical trials with survival endpoints"
+subtitle: "Calculate sample size, power, or duration time when the other two parameters are fixed. "
+author: "Qihu Zhang & Joanna H. Shih"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: united
+    highlight: tango
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    number_sections: true
+abstract: "Sample size, power or duration of the study are calculated for survival endpoints with time-dependent rates of event, crossover, and loss to follow-up. The calculation allows for the specification of a wide range of complexities commonly occurring in clinical trials including nonproportional hazards, lag in treatment effect, and uncertainties in treatment benefit. It was based on the method of Lakatos (1986, 1988) and previously implemented in SAS."
+vignette: >
+  %\VignetteIndexEntry{SIZE R package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  %\usepackage[utf8]{inputenc}
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Required arguments
+<font size="3"> $k$ </font> = hazard ratio. Values of $k$ may be entered in two ways:
+
+1. $k$ = a vector of numbers if prop=0.
+2. $k$ = scalar if prop=1.
+
+<font size="3"> $n$ </font> = total sample size. If the goal of the analysis is to calculate power, $n$ must be specified. SIZE allows multiple values of $n$. Power is calculated for each $n$.
+
+<font size="3"> $np$ </font> = number of periods. The hazard rate is constant within each period.
+
+<font size="3"> $pc$ </font> = probability of an event in the control group. $pc$ may be entered in two ways. First, $pc$ may be entered as a vector of $np$ event probabilities. Each entry in the vector is a conditional probability of having an event, given having survived the previous periods. Second, $pc$ may contain a vector of two values. The first value is the probability of an event and the second value is the number of periods to reach that probability. SIZE allows multiple vectors of $pc$ and a sample size or power is calculated for each vector.
+
+<font size="3"> $pcratio$ </font> = ratio of the hazard rates for the study endpoint over the $np$ periods in the control group. If $pc$ is specified in the second way, $pcratio$ must be specified.
+
+<font size="3"> $power$ </font>.  If the goal of the analysis is to find sample sizes, power must be specified. SIZE allows multiple values of power. A sample size is calculated for each.
+
+# Optional arguments
+<font size="3"> $alpha$ </font> = type I error for two-tailed alternatives. The default value is 0.05.
+
+<font size="3"> $din$ </font>  = the proportion of participants in the control group who switch to the treatment group during the course of follow-up. The default value is 0. 
+
+<font size="3"> $diratio$ </font> = ratio of the hazard rates for crossovers from the control to the treatment group.
+
+<font size="3"> $distdin$ </font> = a discrete prior probability distribution for $din$. The sum of values of $distdin$ is 1.
+
+<font size="3"> $distdout$ </font>  = a discrete prior probability distribution for $dout$. The sum of values of $distdout$ is 1.
+
+<font size="3"> $distk$ </font>  = a discrete prior probability distribution for the hazard ratio, $k$. Each $k$ value is considered a mass point and is assigned a probability mass from $distk$. The number of masses in $distk$ must be equal to the number of entries in $k$. The sum of values of $distk$ is 1.
+
+<font size="3"> $distloss$ </font> = a discrete prior distribution for $loss$. The sum of values of $distloss$ is 1.
+
+<font size="3"> $distpc$ </font> = a discrete prior probability distribution for $pc$. Each vector of $pc$ is considered a mass point and is assigned a probability mass. The number of masses in $distpc$ must be equal to the number of vectors in $pc$. The sum of values of $distpc$ is 1.
+
+<font size="3"> $doratio$ </font> = ratio of the hazard rates for crossovers from the treatment to the control group.
+
+<font size="3"> $dout$ </font> = the proportion of participants in the treatment group who switch to the control group during the course of follow-up. The default value is 0.
+
+<font size="3"> $lag$ </font> = lag time, the number of periods to achieve the full treatment effect. It adjusts the event rate for crossovers under the nonproportional hazards model. If $lag$ is not specified, then participants return to the efficacy level comparable to the level in the opposite arm immediately after crossover. 
+
+<font size="3"> $lagdout$ </font> = lagged effect of dropout. It equals $1$ if crossovers from the treatment group return to the control group level in the same fashion as they reach the treatment effect level and equals 0 if the treatment effect vanishes immediately after crossover. The default value is 1.
+
+<font size="3"> $logr$ </font> = indicator of the test statistic. If $logr$ = 0, then the binomial formula is used. If $logr$ = 1, then the log-rank test is used. If $logr$ = a vector of $np$ weights, then the weighted log-rank test is used. The default value is 1.
+
+<font size="3"> $loratio$ </font> = ratio of the hazard rates for loss.
+
+<font size="3"> $loss$ </font> = the proportion of participants lost to follow-up because of censoring, loss of contact, or competing risks.
+
+<font size="3"> $nmin$, $nmax$, $ntol$ </font> = minimum and maximum of the sample size to be used in the iterative bisection method to search for the sample size such that the calculated power is equal to or grater than the specified power within the
+relative tolerance, $ntol$. Default  = 0, 20000, 0.001.
+
+<font size="3"> $npmin$, $npmax$, $nptol$ </font>  = minimum and maximum of the duration time to be used in the iterative bisection method to search for the duration time such that the calculated power is equal to or greater than the specified power within the relative tolerance, $nptol$. Default  = 0, 200, 0.001.
+
+<font size="3"> $output$ </font> = 0 or 1. If $output$ = 1, then all the parameter values are printed. The default value is 0.
+
+<font size="3"> $prop$ </font> = 0 or 1. If $prop$ = 1, then the hazards are proportional and k remains the same for the duration of the study. If $prop$ = 0, then the hazard are nonproportional and $k$ must be a vector of np entries.
+
+<font size="3"> $ratio$ </font> = two numbers referring to the ratio of the sample size in the control group to that in the treatment group. For example, if the allocation ratio is 2:3, then $ratio$  = c(2,3).
+
+<font size="3"> $rectime$ </font> =a vector of accrual time. If $simult$ equals 0, $rectime$ must be specified.
+
+<font size="3"> $recratio$ </font> = a vector of relative accrual rates over the accrual times. The length of $recratio$ and the length of $rectime$ must be equal.
+
+<font size="3"> $recrate$ </font>  = the recruitment rate in each period. If both sample size and power are specified and the goal is to solve for the duration time, then $recrate$ must be specified.
+
+<font size="3"> $sbdv$ </font> = number of intervals to be divided in each period. Within a given period, the probability of an event is assumed the same across intervals of equal length and equals $1 - (1 - x)^{1/sbdv}$, where $x$ is the probability of an event in a period. If $lag$ is not specified, then the default of $sbdv$ is 20. If $lag$ is specified, the default is 4. The product of $lag$ and $sbdv$ determines the number of intermediate states for the event rate in the treatment group. For example, if $lag$ = 5 and $sbdv$ = 4, then there are 5 X 4 = 20 intermediate states between the control and treatment groups. The intermediate states account for the lag in treatment effect.
+
+<font size="3"> $simult$ </font> = 0 or 1. If $simult$ = 1, then participants enter the study simultaneously. If $simult$ = 0, participants enter the study according to the accrual pattern specified in $rectime$ and $recratio$.
+
+# Examples 
+```{r }
+library(SIZE)
+# Example 1
+size(
+  np=4,
+  pc=c(0.30,4),
+  pcratio=c(1,2,2,2),
+  k=0.65,
+  power=0.8
+)
+
+# Example 2
+size(
+  np=5,
+  pc=c(0.30, 4),
+  pcratio=c(1, 2, 2, 2, 2),
+  k=0.65,
+  power=0.8,
+  din=c(.10, 4),
+  diratio=c(1, 1, 1, 1, 1),
+  dout=c(.10, 4),
+  doratio=c(1, 1, 2, 2, 2),
+  loss=c(.10, 4),
+  loratio=c(1, 1, 1, 1, 1),
+  logr=1,
+  simult=0,
+  rectime=c(1, 2),
+  recratio=c(1, 1)
+)
+
+# Example 3
+size(
+  np=8,
+  pc=c(0.30, 8),
+  pcratio=rep(1,8),
+  prop=0,
+  k=c(1, 0.82, rep(0.65,6)),
+  power=0.8
+)
+
+
+# Example 4
+size(
+  np=24,
+  pc=c(0.30, 24),
+  pcratio=rep(1,24),
+  prop=0,
+  k=c(1, 0.9417, 0.8834, 0.825, 0.7667, 0.7084, rep(0.65,18)),
+  power=0.8,
+  din=c(.10, 24),
+  diratio=rep(1,24),
+  dout=c(.10, 24),
+  doratio=c(rep(1,12), rep(2,12)),
+  lag=7,
+  lagdout=1
+)
+
+# Example 5
+size(
+  np=4,
+  pc=c(0.30,4),
+  pcratio=c(1,2,2,2),
+  k=0.65,
+  power=0.8,
+  n=800,
+  din=c(0.10,4),
+  diratio=c(1,1,1,1),
+  dout=c(0.10,4),
+  doratio=c(1,1,2,2),
+  loss=c(0.10,4),
+  loratio=c(1,1,1,1),
+  npmin=1,
+  npmax=20,
+  recrate=200
+)
+
+# Example 6
+size(
+  np=4,
+  pc=c(0.20,4),
+  pcratio=c(1,1,1,1),
+  k=c(0.65,0.35),
+  distk=c(0.5,0.5),
+  n=600,
+  din=c(0.10,4),
+  diratio=c(1,1,1,1),
+  dout=c(0.10,4),
+  doratio=c(1,1,1,1),
+  loss=c(0.10,4),
+  loratio=c(1,1,1,1)
+)
+
